@@ -36,7 +36,7 @@ FormElements.Text = ({label, style, ...props}: TextProps) => {
   );
 };
 
-FormElements.Chips = <T extends number | string>({
+FormElements.ChipGroup = <T extends number | string>({
   label,
   options,
   onChange,
@@ -44,14 +44,16 @@ FormElements.Chips = <T extends number | string>({
   return (
     <View>
       {label && <Text style={styles.label}>{label}</Text>}
-      {options.map(option => (
-        <Text
-          key={option.value}
-          style={styles.chip}
-          onPress={() => onChange?.(option.value)}>
-          {option.label}
-        </Text>
-      ))}
+      <View style={styles.chipGroup}>
+        {options.map(option => (
+          <Text
+            key={option.value}
+            style={styles.chip}
+            onPress={() => onChange?.(option.value)}>
+            {option.label}
+          </Text>
+        ))}
+      </View>
     </View>
   );
 };
@@ -68,10 +70,16 @@ const styles = StyleSheet.create({
   chip: {
     borderWidth: 1,
     borderColor: '#ccc',
-    padding: 10,
-    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 64,
     color: '#333',
-    marginBottom: 8,
+    width: 'auto',
+  },
+  chipGroup: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
 });
 

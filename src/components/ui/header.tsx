@@ -1,7 +1,7 @@
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import React from 'react';
 import {StackHeaderProps} from '@react-navigation/stack';
-import {SCREEN_HEADERS} from '../../constants/screenHeaders';
+import {SCREEN_HEADERS} from '../../constants/constants';
 
 const Header = (props: StackHeaderProps) => {
   const canGoBack = !!props.back?.href;

@@ -4,6 +4,7 @@ import {Alert, StyleSheet, View} from 'react-native';
 import ButtonElement from '../components/ui/buttonElement';
 import FormElements from '../components/ui/formElements';
 import {Timer} from '../models/timer';
+import {CATEGORIES} from '../constants/constants';
 
 const TimerScreen = () => {
   const [formValues, setFormValues] = useState({
@@ -63,11 +64,14 @@ const TimerScreen = () => {
         keyboardType="number-pad"
         onChangeText={text => handleChange('duration', text)}
       />
-      <FormElements.Text
+      <FormElements.ChipGroup
         label="Category"
-        placeholder="Enter category"
-        value={formValues.category}
-        onChangeText={text => handleChange('category', text)}
+        selected={formValues.category}
+        options={Object.entries(CATEGORIES).map(([key, value]) => ({
+          label: value,
+          value: key,
+        }))}
+        onChange={text => handleChange('category', text)}
       />
 
       <ButtonElement title="Save Timer" onPress={saveTimer} />
