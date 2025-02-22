@@ -31,7 +31,8 @@ const TimerScreen = () => {
       duration: Number(duration),
       category,
       remainingDuration: Number(duration),
-      startTime: null,
+      startTime: new Date(),
+      paused: true,
     };
 
     try {

@@ -2,6 +2,7 @@ import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import React from 'react';
 import {StackHeaderProps} from '@react-navigation/stack';
 import {SCREEN_HEADERS} from '../../constants/constants';
+import Icon from 'react-native-vector-icons/AntDesign';
 
 const Header = (props: StackHeaderProps) => {
   const canGoBack = !!props.back?.href;
@@ -11,7 +12,7 @@ const Header = (props: StackHeaderProps) => {
         <TouchableOpacity
           style={styles.leftIcon}
           onPress={props.navigation.goBack}>
-          <Text>Back</Text>
+          <Icon name="arrowleft" size={24} color="#333" />
         </TouchableOpacity>
       )}
       <Text style={styles.title}>
@@ -37,6 +38,8 @@ const styles = StyleSheet.create({
   leftIcon: {
     position: 'absolute',
     left: 16,
+    width: 24,
+    height: 24,
   },
   title: {
     color: '#333',

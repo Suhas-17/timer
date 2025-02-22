@@ -39,6 +39,7 @@ FormElements.Text = ({label, style, ...props}: TextProps) => {
 FormElements.ChipGroup = <T extends number | string>({
   label,
   options,
+  selected,
   onChange,
 }: ChipProps<T>) => {
   return (
@@ -48,7 +49,10 @@ FormElements.ChipGroup = <T extends number | string>({
         {options.map(option => (
           <Text
             key={option.value}
-            style={styles.chip}
+            style={[
+              styles.chip,
+              selected === option.value && styles.chipSelected,
+            ]}
             onPress={() => onChange?.(option.value)}>
             {option.label}
           </Text>
@@ -75,6 +79,9 @@ const styles = StyleSheet.create({
     borderRadius: 64,
     color: '#333',
     width: 'auto',
+  },
+  chipSelected: {
+    borderColor: '#006FE6',
   },
   chipGroup: {
     flexDirection: 'row',

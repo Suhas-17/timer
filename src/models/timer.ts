@@ -3,7 +3,7 @@ export interface Timer {
   name: string;
   duration: number;
   category: string;
-  startTime: string | null;
+  startTime: Date;
   remainingDuration: number;
-  paused?: boolean;
+  paused: boolean;
 }
