@@ -5,8 +5,11 @@ import ButtonElement from '../components/ui/buttonElement';
 import FormElements from '../components/ui/formElements';
 import {Timer} from '../models/timer';
 import {CATEGORIES} from '../constants/constants';
+import {useNavigation} from '@react-navigation/native';
+import {NavigationProps} from '../models/routes';
 
 const TimerScreen = () => {
+  const navigation = useNavigation<NavigationProps>();
   const [formValues, setFormValues] = useState({
     name: '',
     duration: '',
@@ -28,9 +31,9 @@ const TimerScreen = () => {
     const newTimer: Timer = {
       id: Date.now().toPrecision(),
       name,
-      duration: Number(duration),
+      duration: Number(duration) * 1000,
       category,
-      remainingDuration: Number(duration),
+      remainingDuration: Number(duration) * 1000,
       startTime: new Date(),
       paused: true,
     };
@@ -44,7 +47,7 @@ const TimerScreen = () => {
       );
 
       setFormValues({name: '', duration: '', category: ''});
-      Alert.alert('Success', 'Timer saved!');
+      navigation.navigate('home');
     } catch (error) {
       console.error('Failed to save timer:', error);
     }

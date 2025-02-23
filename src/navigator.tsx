@@ -3,6 +3,7 @@ import AddTimer from './screens/addTimer';
 import Home from './screens/home';
 import {RouteParams} from './models/routes';
 import Header from './components/ui/header';
+import History from './screens/history';
 
 const Stack = createStackNavigator<RouteParams>();
 
@@ -14,6 +15,7 @@ const AppNavigator = () => {
       }}
       initialRouteName="home">
       <Stack.Screen name="home" component={Home} />
+      <Stack.Screen name="history" component={History} />
       <Stack.Screen name="add-timer" component={AddTimer} />
     </Stack.Navigator>
   );

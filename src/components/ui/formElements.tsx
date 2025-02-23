@@ -9,11 +9,11 @@ import {
 } from 'react-native';
 
 interface TextProps extends TextInputProps {
-  label: string;
+  label?: string;
 }
 
 interface ChipProps<T extends number | string> {
-  label: string;
+  label?: string;
   selected?: T;
   onChange?: (value: T) => void;
   options: {label: string; value: T}[];

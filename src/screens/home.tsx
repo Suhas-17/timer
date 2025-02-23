@@ -2,8 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {
+  Alert,
   Dimensions,
-  ScrollView,
   SectionList,
   StyleSheet,
   Text,
@@ -16,9 +16,13 @@ import {CATEGORIES} from '../constants/constants';
 import {NavigationProps} from '../models/routes';
 import {Timer} from '../models/timer';
 
-const Divider = () => <View style={styles.divider} />;
+const updateHistory = async (item: Timer) => {
+  const history = await AsyncStorage.getItem('history');
+  const timers: Timer[] = history ? JSON.parse(history) : [];
+  await AsyncStorage.setItem('history', JSON.stringify([...timers, item]));
+};
 
-const RenderTimer = ({
+export const RenderTimer = ({
   item,
   updateTimers,
 }: {
@@ -28,32 +32,38 @@ const RenderTimer = ({
   const screenWidth = Dimensions.get('window').width;
   const actualRemainingTime = item.paused
     ? item.remainingDuration
-    : new Date(item.startTime).getSeconds() +
-      item.remainingDuration -
-      new Date().getSeconds();
+    : new Date(item.startTime).getTime() -
+      new Date().getTime() +
+      item.remainingDuration;
+
   const [time, setTime] = useState(
     actualRemainingTime > 0 ? actualRemainingTime : 0,
   );
   const [pause, setPause] = useState(item.paused);
 
   useEffect(() => {
-    if (!pause) {
+    if (!pause && actualRemainingTime > 0) {
       const intId = setInterval(() => {
         setTime(prev => {
           if (prev <= 0) {
             clearInterval(intId);
+            updateHistory(item);
+            Alert.alert(`${item.name} completed successfully`);
             return 0;
           }
-          return prev - 0.1;
+          return prev - 1000;
         });
-      }, 100);
+      }, 1000);
 
       return () => clearInterval(intId);
     }
   }, [pause]);
-  // let status ="";
-  // if (!item.paused && new Date()) status =
-  // if(item.remainingDuration !== item.duration)
+  let status = 'Completed';
+  if (pause && time > 0) {
+    status = 'Paused';
+  } else if (time > 0) {
+    status = 'Running';
+  }
 
   const resumeTimer = async () => {
     try {
@@ -93,6 +103,7 @@ const RenderTimer = ({
       updateTimers(timers);
       setPause(true);
       setTime(item.duration);
+
       await AsyncStorage.setItem('timers', JSON.stringify(timers));
     } catch (error) {
       console.error('Failed to save timer:', error);
@@ -105,14 +116,16 @@ const RenderTimer = ({
         <View
           style={[
             styles.progress,
-            {width: (screenWidth * time) / item.duration},
+            {
+              width: (screenWidth * (item.duration - time)) / item.duration,
+            },
           ]}
         />
       )}
       <View style={styles.timerDetails}>
         <Text style={styles.timerName}>{item.name}</Text>
-        <Text style={styles.timerText}>{item.duration}s</Text>
-        <Text style={styles.timerText}>{item.paused}</Text>
+        <Text style={styles.timerText}>{Math.ceil(time / 1000)}s</Text>
+        <Text style={styles.timerText}>{status}</Text>
       </View>
       <View style={styles.timerActions}>
         {time > 0 && (
@@ -120,7 +133,7 @@ const RenderTimer = ({
             {pause ? 'Play' : 'Pause'}
           </Text>
         )}
-        {(pause || time <= 0) && (
+        {(pause || time <= 0) && time !== item.duration && (
           <Text style={styles.timerText} onPress={reset}>
             Reset
           </Text>
@@ -133,6 +146,7 @@ const RenderTimer = ({
 const Home = () => {
   const navigation = useNavigation<NavigationProps>();
   const [timers, setTimers] = useState<Timer[]>([]);
+  const [action, setAction] = useState(0);
   const [hidden, setHidden] = useState<
     Partial<Record<keyof typeof CATEGORIES, boolean>>
   >({});
@@ -168,23 +182,86 @@ const Home = () => {
     setHidden(prev => ({...prev, [category]: !prev[category]}));
   };
 
+  const updateAll = async (type: 'run' | 'pause' | 'reset') => {
+    try {
+      const newTimers = timers?.map(timer => {
+        if (type === 'run') {
+          if (!timer.paused) return timer;
+          return {
+            ...timer,
+            paused: false,
+            startTime: new Date(),
+          };
+        } else if (type === 'pause') {
+          if (timer.paused) return timer;
+          return {
+            ...timer,
+            paused: true,
+            remainingDuration: Math.max(
+              new Date(timer.startTime).getTime() -
+                new Date().getTime() +
+                timer.remainingDuration,
+              0,
+            ),
+          };
+        }
+        return {
+          ...timer,
+          paused: true,
+          startTime: new Date(),
+          remainingDuration: timer.duration,
+        };
+      });
+      setTimers(newTimers);
+      setAction(prev => prev + 1);
+      await AsyncStorage.setItem('timers', JSON.stringify(newTimers));
+    } catch (error) {
+      console.error('Failed to save timer:', error);
+    }
+  };
+
+  if (timers.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.emptyContainer}>
+          <Icon name="folder-open-o" size={48} color="#007BFF" />
+          <Text style={styles.emptyText}>No timers found</Text>
+        </View>
+        <View style={styles.btn}>
+          <ButtonElement
+            title="Add Timer"
+            onPress={() => navigation.navigate('add-timer')}
+          />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
+      {timers.length && (
+        <View style={[styles.timerActions, styles.actions]}>
+          <ButtonElement title="Run All" onPress={() => updateAll('run')} />
+          <ButtonElement title="Pause All" onPress={() => updateAll('pause')} />
+          <ButtonElement title="Reset All" onPress={() => updateAll('reset')} />
+        </View>
+      )}
       <SectionList
+        key={action}
         sections={groupedTimers}
         renderItem={({item, section}) =>
           hidden[section.title] ? null : (
             <RenderTimer item={item} updateTimers={setTimers} />
           )
         }
-        ItemSeparatorComponent={Divider}
-        SectionSeparatorComponent={Divider}
         renderSectionHeader={({section}) => (
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => hideSection(section.title)}
             style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <Text style={styles.sectionTitle}>
+              {CATEGORIES[section.title] || section.title}
+            </Text>
             <Icon
               name={hidden[section.title] ? 'chevron-down' : 'chevron-up'}
               size={16}
@@ -194,9 +271,6 @@ const Home = () => {
         )}
         keyExtractor={item => item.id}
       />
-      <ScrollView>
-        <Text>{JSON.stringify(timers[2])}</Text>
-      </ScrollView>
       <View style={styles.btn}>
         <ButtonElement
           title="Add Timer"
@@ -219,10 +293,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     alignItems: 'stretch',
     flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
   sectionTitle: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#333',
   },
   timerName: {
     fontSize: 18,
@@ -237,10 +314,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
   },
+  actions: {padding: 16, flexWrap: 'wrap'},
   progress: {
     position: 'absolute',
     top: 0,
     bottom: 0,
+    left: 0,
     backgroundColor: '#007BFF',
     opacity: 0.2,
   },
@@ -252,11 +331,23 @@ const styles = StyleSheet.create({
   divider: {height: 1, backgroundColor: '#ccc'},
   sectionContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 6,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#eee',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
   btn: {padding: 16},
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#444',
+  },
 });

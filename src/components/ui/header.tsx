@@ -3,6 +3,7 @@ import React from 'react';
 import {StackHeaderProps} from '@react-navigation/stack';
 import {SCREEN_HEADERS} from '../../constants/constants';
 import Icon from 'react-native-vector-icons/AntDesign';
+import FIcon from 'react-native-vector-icons/FontAwesome';
 
 const Header = (props: StackHeaderProps) => {
   const canGoBack = !!props.back?.href;
@@ -18,6 +19,13 @@ const Header = (props: StackHeaderProps) => {
       <Text style={styles.title}>
         {SCREEN_HEADERS[props.route.name as keyof typeof SCREEN_HEADERS]}
       </Text>
+      {props.route.name === 'home' && (
+        <TouchableOpacity
+          style={styles.rightIcon}
+          onPress={() => props.navigation.navigate('history')}>
+          <FIcon name="history" size={24} color="#444" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -38,6 +46,12 @@ const styles = StyleSheet.create({
   leftIcon: {
     position: 'absolute',
     left: 16,
+    width: 24,
+    height: 24,
+  },
+  rightIcon: {
+    position: 'absolute',
+    right: 16,
     width: 24,
     height: 24,
   },
